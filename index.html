@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Task Boss">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Task Boss</title>
+<style>
+:root{--bg:#0b1020;--card:#151c30;--card2:#1c2640;--text:#f7f8fc;--muted:#9aa5bd;--accent:#7c5cff;--green:#35d07f;--gold:#ffd166;--red:#ff647c;--line:#2b3652}
+*{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,#0b1020,#11182b);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;min-height:100vh}
+button,input,select,textarea{font:inherit} button{border:0}
+.app{max-width:720px;margin:auto;padding:env(safe-area-inset-top) 16px calc(24px + env(safe-area-inset-bottom))}
+header{padding:18px 4px 10px;display:flex;justify-content:space-between;align-items:center}
+h1{font-size:28px;margin:0}.subtitle{color:var(--muted);font-size:13px;margin-top:3px}
+.iconbtn{background:var(--card);color:var(--text);padding:10px 12px;border-radius:14px}
+.card{background:rgba(21,28,48,.95);border:1px solid var(--line);border-radius:20px;padding:16px;margin:12px 0;box-shadow:0 10px 30px rgba(0,0,0,.15)}
+.level{display:flex;justify-content:space-between;gap:12px;align-items:center}.levelname{font-size:20px;font-weight:750}.pill{background:#272f4a;color:#cfd6e7;border-radius:999px;padding:6px 10px;font-size:12px}
+.bar{height:13px;background:#29324a;border-radius:999px;overflow:hidden;margin:12px 0 8px}.fill{height:100%;background:linear-gradient(90deg,var(--accent),#b06cff);border-radius:999px;transition:.35s}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--card2);border-radius:14px;padding:11px;text-align:center}.stat b{display:block;font-size:20px}.stat span{color:var(--muted);font-size:11px}
+.sectiontitle{display:flex;justify-content:space-between;align-items:center;margin:20px 2px 8px;font-weight:750}.small{color:var(--muted);font-size:12px;font-weight:500}
+.task{display:flex;gap:12px;align-items:center;padding:13px 2px;border-bottom:1px solid var(--line)}.task:last-child{border-bottom:0}.check{width:27px;height:27px;border-radius:9px;border:2px solid #53607e;background:transparent;display:grid;place-items:center;flex:none;color:white}.check.done{background:var(--green);border-color:var(--green)}.taskmain{flex:1;min-width:0}.taskname{font-weight:650;word-break:break-word}.task.done .taskname{text-decoration:line-through;color:#7f8aa3}.points{font-size:11px;color:var(--gold);margin-top:3px}.taskactions{display:flex;gap:5px}.mini{background:#252e47;color:#aeb8cc;border-radius:9px;padding:7px;font-size:12px}
+.empty{text-align:center;color:var(--muted);padding:24px}
+.primary{background:var(--accent);color:white;border-radius:13px;padding:11px 14px;font-weight:700}.secondary{background:#28334f;color:white;border-radius:13px;padding:11px 14px;font-weight:650}
+.formrow{display:grid;grid-template-columns:1fr 110px auto;gap:8px}.input,.select,.textarea{width:100%;background:#0e1527;border:1px solid #33405e;color:white;border-radius:12px;padding:12px;outline:none}.textarea{min-height:90px;resize:vertical}
+.reward{display:flex;gap:12px;align-items:center}.rewardemoji{font-size:34px}.rewardtext{flex:1}.rewardtext b{display:block}.rewardtext span{color:var(--muted);font-size:12px}
+.boss{border:1px solid #684d8c;background:linear-gradient(135deg,#211a35,#161d31)}.boss h2{margin:0 0 5px;font-size:19px}.boss p{color:#c1c8d8;font-size:13px;line-height:1.45}.boss .locked{color:#a78bfa}.boss .ready{color:var(--gold)}
+.modal{position:fixed;inset:0;background:rgba(3,6,15,.75);display:none;align-items:flex-end;justify-content:center;padding:12px;z-index:5}.modal.open{display:flex}.sheet{background:#151c30;border:1px solid var(--line);border-radius:22px;padding:18px;width:min(680px,100%);max-height:90vh;overflow:auto}.sheet h2{margin-top:0}
+.actions{display:flex;gap:8px;margin-top:12px}.actions>*{flex:1}.danger{color:#ff8b9c;background:#3a2030}
+.notice{padding:12px;border-radius:13px;background:#1c2640;color:#d8deea;font-size:13px;margin-top:10px}
+.unlock{animation:pop .45s ease}@keyframes pop{50%{transform:scale(1.03)}}
+.hidden{display:none!important}
+@media(max-width:500px){.formrow{grid-template-columns:1fr 90px}.formrow .primary{grid-column:1/-1}.taskactions .mini{padding:6px}.stats b{font-size:17px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div><h1>⚔️ Task Boss</h1><div class="subtitle">Do tasks. Beat bosses. Earn real rewards.</div></div>
+  <button class="iconbtn" onclick="openSettings()">⚙️</button>
+</header>
+
+<div class="card">
+  <div class="level"><div><div class="levelname" id="levelName">Level 1</div><div class="subtitle" id="levelTitle">The Starter</div></div><div class="pill" id="totalPoints">0 XP</div></div>
+  <div class="bar"><div class="fill" id="progressFill" style="width:0%"></div></div>
+  <div class="level"><span class="small" id="progressText">0 / 1000 XP</span><span class="small" id="nextText">1000 to boss</span></div>
+</div>
+
+<div class="stats">
+  <div class="stat"><b id="todayDone">0</b><span>Done today</span></div>
+  <div class="stat"><b id="streak">0</b><span>Day streak</span></div>
+  <div class="stat"><b id="levelCount">1</b><span>Level</span></div>
+</div>
+
+<div class="sectiontitle">Today's Tasks <span class="small" id="taskCount"></span></div>
+<div class="card" id="taskList"></div>
+
+<div class="sectiontitle">Final Boss</div>
+<div class="card boss" id="bossCard"></div>
+
+<div class="sectiontitle">Reward <span class="small">real-life</span></div>
+<div class="card reward">
+  <div class="rewardemoji">🎁</div>
+  <div class="rewardtext"><b id="rewardName">Set your reward</b><span id="rewardDesc">Example: 30 minutes of gaming, favorite snack, movie night.</span></div>
+  <button class="secondary" onclick="openReward()">Edit</button>
+</div>
+
+<div class="sectiontitle">Achievements</div>
+<div class="card" id="achievements"></div>
+
+<div class="sectiontitle">Quick rules</div>
+<div class="card">
+  <div class="notice">Each task is worth <b>100, 300, or 500 XP</b>. Reach <b>1,000 XP</b> in the current level to unlock its Final Boss. Beat the boss to claim the real-life reward and advance to the next level.</div>
+</div>
+</div>
+
+<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+
+<script>
+const KEY="taskBossSaveV1";
+const bosses=[
+ {name:"Algebra Apprentice",desc:"Pass an Algebra 1 test with a score of at least 80%.",type:"test"},
+ {name:"Juggling Goblin",desc:"Learn to juggle and complete 30 consecutive catches.",type:"skill"},
+ {name:"Knowledge Keeper",desc:"Create 10 Anki flashcards from an encyclopedia article or entry.",type:"project"},
+ {name:"Room Raid",desc:"Do a complete room reset: floor, surfaces, laundry, and trash.",type:"project"},
+ {name:"Focus Knight",desc:"Complete one uninterrupted 60-minute study session and write down what you accomplished.",type:"focus"},
+ {name:"Fitness Titan",desc:"Complete a workout you choose and record the workout in your notes.",type:"fitness"}
+];
+const titles=["The Starter","The Apprentice","The Challenger","The Strategist","The Hero","The Champion","The Master","The Legend"];
+const bossForLevel=i=>bosses[(i-1)%bosses.length];
+let data=JSON.parse(localStorage.getItem(KEY)||"null")||{
+ level:1,xp:0,tasks:[],reward:{name:"Choose your reward",desc:"Set a reward you can claim after beating the Final Boss."},
+ completedByDay:{},history:[],boss:{status:"locked",custom:null},achievements:{}
+};
+function save(){localStorage.setItem(KEY,JSON.stringify(data));render()}
+function today(){return new Date().toISOString().slice(0,10)}
+function uid(){return Date.now()+Math.random()}
+function openModal(content){document.getElementById("sheet").innerHTML=content;document.getElementById("modal").classList.add("open")}
+function closeModal(){document.getElementById("modal").classList.remove("open")}
+document.getElementById("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()})
+
+function render(){
+ const boss=bossForLevel(data.level), xp=Math.min(data.xp,1000), pct=xp/10;
+ document.getElementById("levelName").textContent="Level "+data.level;
+ document.getElementById("levelTitle").textContent=titles[(data.level-1)%titles.length];
+ document.getElementById("totalPoints").textContent=data.xp+" XP";
+ document.getElementById("progressFill").style.width=pct+"%";
+ document.getElementById("progressText").textContent=Math.min(data.xp,1000)+" / 1000 XP";
+ document.getElementById("nextText").textContent=data.xp>=1000?"Boss unlocked":"1000 XP to boss";
+ document.getElementById("levelCount").textContent=data.level;
+ const doneToday=(data.completedByDay[today()]||[]).length;
+ document.getElementById("todayDone").textContent=doneToday;
+ document.getElementById("streak").textContent=getStreak();
+ document.getElementById("taskCount").textContent=data.tasks.length+" tasks";
+ const list=document.getElementById("taskList");
+ list.innerHTML=data.tasks.length?data.tasks.map(t=>`
+ <div class="task ${t.done?'done':''}">
+   <button class="check ${t.done?'done':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</button>
+   <div class="taskmain"><div class="taskname">${esc(t.name)}</div><div class="points">+${t.points} XP</div></div>
+   <div class="taskactions"><button class="mini" onclick="editTask('${t.id}')">Edit</button><button class="mini" onclick="deleteTask('${t.id}')">×</button></div>
+ </div>`).join(""):`<div class="empty">No tasks yet. Add your first quest.</div>`;
+ const unlocked=data.xp>=1000;
+ document.getElementById("bossCard").innerHTML=`
+ <h2>👹 ${esc(data.boss.custom?.name||boss.name)}</h2>
+ <p>${esc(data.boss.custom?.desc||boss.desc)}</p>
+ <div class="${unlocked?'ready':'locked'}">${unlocked?'⚡ BOSS UNLOCKED — complete it to advance.':'🔒 Locked until you reach 1,000 XP.'}</div>
+ <div class="actions"><button class="${unlocked?'primary':'secondary'}" ${unlocked?'':'disabled'} onclick="completeBoss()">${unlocked?'Mark Boss Complete':'Keep Questing'}</button><button class="secondary" onclick="editBoss()">Customize</button></div>`;
+ document.getElementById("rewardName").textContent=data.reward.name;
+ document.getElementById("rewardDesc").textContent=data.reward.desc;
+ renderAchievements();
+}
+function esc(s){return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function addTask(){
+ openModal(`<h2>New Quest</h2><div class="notice">Choose a point value: 100, 300, or 500 XP.</div>
+ <div style="margin-top:12px"><input class="input" id="taskName" placeholder="Task name"></div>
+ <div style="margin-top:8px"><select class="select" id="taskPoints"><option>100</option><option>300</option><option>500</option></select></div>
+ <div class="actions"><button class="secondary" onclick="closeModal()">Cancel</button><button class="primary" onclick="createTask()">Add Quest</button></div>`);
+}
+function createTask(){let n=document.getElementById("taskName").value.trim(),p=+document.getElementById("taskPoints").value;if(!n)return;data.tasks.push({id:String(uid()),name:n,points:p,done:false});closeModal();save()}
+function editTask(id){let t=data.tasks.find(x=>x.id===id);openModal(`<h2>Edit Quest</h2><input class="input" id="taskName" value="${esc(t.name)}"><div style="margin-top:8px"><select class="select" id="taskPoints"><option ${t.points===100?'selected':''}>100</option><option ${t.points===300?'selected':''}>300</option><option ${t.points===500?'selected':''}>500</option></select></div><div class="actions"><button class="secondary" onclick="closeModal()">Cancel</button><button class="primary" onclick="updateTask('${id}')">Save</button></div>`)}
+function updateTask(id){let t=data.tasks.find(x=>x.id===id);t.name=document.getElementById("taskName").value.trim()||t.name;t.points=+document.getElementById("taskPoints").value;closeModal();save()}
+function deleteTask(id){if(confirm("Delete this quest?")){data.tasks=data.tasks.filter(t=>t.id!==id);save()}}
+function toggleTask(id){
+ let t=data.tasks.find(x=>x.id===id); if(!t)return;
+ t.done=!t.done;
+ if(t.done){data.xp+=t.points;(data.completedByDay[today()]??=[]).push(id);data.history.push({date:today(),xp:t.points});}
+ else{data.xp=Math.max(0,data.xp-t.points);data.completedByDay[today()]=(data.completedByDay[today()]||[]).filter(x=>x!==id)}
+ unlockAchievements();save();
+}
+function completeBoss(){
+ if(data.xp<1000)return;
+ data.boss.status="completed";data.history.push({date:today(),boss:true,level:data.level});
+ const old=data.level;data.level++;data.xp=0;data.tasks.forEach(t=>t.done=false);data.boss={status:"locked",custom:null};
+ unlockAchievements();save();
+ openModal(`<h2 class="unlock">🏆 Boss Defeated!</h2><p>You cleared Level ${old} and advanced to Level ${data.level}.</p><div class="notice">Reward unlocked: <b>${esc(data.reward.name)}</b><br>${esc(data.reward.desc)}</div><div class="actions"><button class="primary" onclick="closeModal();addTask()">Start Next Level</button></div>`);
+}
+function editBoss(){
+ const b=data.boss.custom||bossForLevel(data.level);
+ openModal(`<h2>Customize Final Boss</h2><input class="input" id="bossName" value="${esc(b.name)}" placeholder="Boss name"><div style="margin-top:8px"><textarea class="textarea" id="bossDesc" placeholder="What must you do to beat it?">${esc(b.desc)}</textarea></div><div class="actions"><button class="secondary" onclick="closeModal()">Cancel</button><button class="primary" onclick="saveBoss()">Save Boss</button></div>`)
+}
+function saveBoss(){data.boss.custom={name:document.getElementById("bossName").value.trim()||bossForLevel(data.level).name,desc:document.getElementById("bossDesc").value.trim()||bossForLevel(data.level).desc};closeModal();save()}
+function openReward(){openModal(`<h2>Real-Life Reward</h2><input class="input" id="rewardNameInput" value="${esc(data.reward.name)}" placeholder="Reward"><div style="margin-top:8px"><textarea class="textarea" id="rewardDescInput" placeholder="Details">${esc(data.reward.desc)}</textarea></div><div class="notice">This is a personal honor system: the app unlocks the reward after the Final Boss is defeated.</div><div class="actions"><button class="secondary" onclick="closeModal()">Cancel</button><button class="primary" onclick="saveReward()">Save</button></div>`)}
+function saveReward(){data.reward={name:document.getElementById("rewardNameInput").value.trim()||"My Reward",desc:document.getElementById("rewardDescInput").value.trim()||"A reward I chose for myself."};closeModal();save()}
+function getStreak(){let s=0,d=new Date();while(true){let k=d.toISOString().slice(0,10);if((data.completedByDay[k]||[]).length===0)break;s++;d.setDate(d.getDate()-1)}return s}
+function unlockAchievements(){
+ const total=data.history.filter(x=>x.xp).reduce((a,b)=>a+b.xp,0);
+ if(total>=1000)data.achievements["1000"]="First 1,000 XP";
+ if(data.level>=3)data.achievements["3"]="Boss Hunter";
+ if(data.level>=5)data.achievements["5"]="Final Boss Veteran";
+ if(data.history.filter(x=>x.boss).length>=1)data.achievements["boss"]="First Boss Defeated";
+}
+function renderAchievements(){
+ const a=Object.values(data.achievements);document.getElementById("achievements").innerHTML=a.length?a.map(x=>`<div style="padding:8px 0">🏅 ${esc(x)}</div>`).join(""):`<div class="empty">Achievements appear as you progress.</div>`;
+}
+function openSettings(){
+ openModal(`<h2>Settings</h2><div class="notice">Your data is stored on this iPhone in the browser. No account is required.</div>
+ <div class="actions"><button class="secondary" onclick="exportData()">Export Save</button><button class="secondary" onclick="importData()">Import Save</button></div>
+ <div class="actions"><button class="danger secondary" onclick="resetGame()">Reset Everything</button><button class="primary" onclick="closeModal()">Done</button></div>`)
+}
+function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="task-boss-save.json";a.click();URL.revokeObjectURL(a.href)}
+function importData(){let i=document.createElement("input");i.type="file";i.accept=".json";i.onchange=e=>{let f=e.target.files[0],r=new FileReader();r.onload=()=>{try{data=JSON.parse(r.result);save();closeModal()}catch{alert("Invalid save file.")}};r.readAsText(f)};i.click()}
+function resetGame(){if(confirm("This deletes all Task Boss progress. Continue?")){localStorage.removeItem(KEY);location.reload()}}
+render();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(console.error));
+}
+</script>
+</body>
+</html>
